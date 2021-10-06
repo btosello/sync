@@ -22,6 +22,7 @@ jobs:
           git remote -v
           git fetch upstream
           git checkout main
+          git config pull.rebase false
           git pull upstream main
         
 
