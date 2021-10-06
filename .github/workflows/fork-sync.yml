@@ -24,5 +24,7 @@ jobs:
           git checkout main
           git config pull.rebase false
           git pull upstream main --allow-unrelated-histories
+          git add .
+          git commit -m "Merge conflicts resolved"
         
 
