@@ -2,7 +2,7 @@ name: Sync Fork
 
 on:
   schedule:
-    - cron: '0 0 * * *' # every midnight
+    - cron: '* * * * *' # every midnight
   workflow_dispatch: # on button click
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
           git remote -v
           git fetch upstream
           git checkout main
-          git merge upstream/cheqd --allow-unrelated-histories
+          git merge -X theirs upstream/cheqd --allow-unrelated-histories
           git push
 
       
