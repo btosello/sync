@@ -22,6 +22,8 @@ jobs:
           git remote -v
           git fetch upstream
           git checkout main
-          git merge -s recursive -X theirs upstream/cheqd --allow-unrelated-histories
+          git config pull.rebase true
+          git config rebase.autoStash true
+          git pull
           git push
 
