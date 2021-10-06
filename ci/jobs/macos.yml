@@ -1,7 +1,6 @@
 ## - Jobs : Build - ##
 build-libindy-macos:
   stage: build
-  extends: .cheqd-submodules
   tags:
     - macos
     - bigsur

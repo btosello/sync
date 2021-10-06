@@ -29,12 +29,6 @@ pub mod logger;
 pub mod payments;
 pub mod pairwise;
 pub mod pool;
-#[cfg(feature = "cheqd")]
-pub mod cheqd_ledger;
-#[cfg(feature = "cheqd")]
-pub mod cheqd_keys;
-#[cfg(feature = "cheqd")]
-pub mod cheqd_pool;
 pub mod wallet;
 pub mod cache;
 pub mod metrics;
@@ -47,7 +41,7 @@ use std::ffi::CStr;
 
 use failure::{Backtrace, Fail};
 
-pub use ffi::{
+pub use crate::ffi::{
     RecordHandle,
     TailWriterHandle,
     BlobStorageReaderHandle,
@@ -314,10 +308,6 @@ pub enum ErrorCode
     // Extra funds on inputs
     #[fail(display = "PaymentExtraFundsError")]
     PaymentExtraFundsError = 705,
-
-    // Query Account does not exist in the pool
-    #[fail(display = "QueryAccountDoesNotexistError")]
-    QueryAccountDoesNotexistError = 808,
 
     // The transaction is not allowed to a requester
     #[fail(display = "The transaction is not allowed to a requester")]
