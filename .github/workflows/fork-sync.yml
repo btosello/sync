@@ -22,8 +22,6 @@ jobs:
           git remote -v
           git fetch upstream
           git checkout main
-          git config pull.rebase true
-          git config rebase.autoStash true
-          git pull upstream main
+          git merge upstream/cheqd --allow-unrelated-histories
           git push
 
