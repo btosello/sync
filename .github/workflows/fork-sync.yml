@@ -23,6 +23,6 @@ jobs:
           git fetch upstream
           git checkout main
           git config pull.rebase false
-          git pull upstream main
+          git pull upstream main --allow-unrelated-histories
         
 
