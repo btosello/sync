@@ -1,0 +1,41 @@
+---
+stages:
+  - dockerbuild-pre
+  - dockerbuild
+  - build-pre
+  - build
+  - test
+  - package
+  - publish
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - cache/
+
+variables:
+  staticLibVersion: "20190607"
+  rustVersion: "1.54.0"
+  libsovtokenVersion: "1.0.5"
+  libsovtokenVersionExtra: "15"
+  indyBranch: 'rc' # RPM stream
+  indySimpleVersion: "1.16.0" # RPM package name
+  indyFullVersion: "1.16.0-170" # RPM directory
+  indyFullDebVersion: "1.16.0~170" # DEB package name
+  androidSovtokenArtifact: "libsovtoken_1.0.5-201912281255-e39929e_all.zip"
+  iosSovtokenArtifact: "libsovtoken_1.0.5-201912281252-e39929e_all.zip"
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+
+include:
+  - '/ci/jobs/common.yml'
+  - '/ci/jobs/java-wrapper.yml'
+  - '/ci/jobs/ubuntu.yml'
+  - '/ci/jobs/ios.yml'
+  - '/ci/jobs/macos.yml'
+  - '/ci/jobs/android.yml'
