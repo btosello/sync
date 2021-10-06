@@ -8,6 +8,8 @@ use std::{
 
 use failure::{Backtrace, Context, Fail};
 use log;
+#[cfg(feature = "cheqd")]
+use http_client;
 
 #[cfg(feature = "casting_errors")]
 use sqlx;
@@ -119,6 +121,8 @@ pub enum IndyErrorKind {
     PaymentExtraFunds,
     #[fail(display = "The transaction is not allowed to a requester")]
     TransactionNotAllowed,
+    #[fail(display = "Query account does not exist")]
+    QueryAccountDoesNotexist,
 }
 
 #[derive(Debug, Clone)]
@@ -140,14 +144,15 @@ impl Fail for IndyError {
 
 impl fmt::Display for IndyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut causes = <dyn Fail>::iter_chain(self.inner.as_ref());
+        let mut first = true;
 
-        if let Some(cause) = causes.next() {
-            writeln!(f, "Error: {}", cause)?;
-        }
-
-        for cause in causes {
-            writeln!(f, "  Caused by: {}", cause)?;
+        for cause in Fail::iter_chain(self.inner.as_ref()) {
+            if first {
+                first = false;
+                writeln!(f, "Error: {}", cause)?;
+            } else {
+                writeln!(f, "  Caused by: {}", cause)?;
+            }
         }
 
         Ok(())
@@ -249,13 +254,49 @@ impl From<log::SetLoggerError> for IndyError {
         err.context(IndyErrorKind::InvalidState).into()
     }
 }
+// TODO: Better error conversion
+// Cosmos SDK error. They don't expose failure::Error interface.
+#[cfg(feature = "cheqd")]
+impl From<eyre::Report> for IndyError {
+    fn from(err: eyre::Report) -> IndyError {
+        let mut indy_error: IndyError = IndyError::from(IndyErrorKind::InvalidStructure);
+        for err_item in err.chain().rev() {
+            indy_error = indy_error.extend(err_item.to_string());
+        }
+        IndyError::from_msg(
+            IndyErrorKind::InvalidStructure,
+            format!("There was an error on the Cosmos side while requesting non-existing account. Errors are: {}",
+                    indy_error.to_string()).to_string())
+    }
+}
+
+// This error is used only for converting string to Path object.
+#[cfg(feature = "cheqd")]
+impl From<cosmrs::tendermint::Error> for IndyError {
+    fn from(_err: cosmrs::tendermint::Error) -> Self {
+        IndyError::from_msg(
+            IndyErrorKind::InvalidStructure,
+            "There was an error while converting string into cosmrs::tendermint::abci::Path")
+    }
+}
+
+#[cfg(feature = "cheqd")]
+impl From<http_client::http_types::Error> for IndyError {
+    fn from(err: http_client::http_types::Error) -> Self {
+        let mut indy_error: IndyError = IndyError::from(IndyErrorKind::IOError);
+        for err_item in err.into_inner().chain().rev() {
+            indy_error = indy_error.extend(err_item.to_string());
+        }
+        indy_error
+    }
+}
 
 #[cfg(feature = "casting_errors")]
 impl From<UrsaCryptoError> for IndyError {
     fn from(err: UrsaCryptoError) -> Self {
         let message = format!(
             "UrsaCryptoError: {}",
-            <dyn Fail>::iter_causes(&err)
+            Fail::iter_causes(&err)
                 .map(|e| e.to_string())
                 .collect::<String>()
         );
@@ -338,6 +379,22 @@ impl From<sqlx::Error> for IndyError {
             ),
             _ => err.to_indy(IndyErrorKind::InvalidState, "Unexpected database error"),
         }
+    }
+}
+
+// ToDo: For now we don't have any specified ABCI errors from tendermint endpoint and from cosmos too
+// That's why we use this general approach.
+// But in the future, in case of adding special ABCI codes it has to be mapped into ErrorCodes.
+impl From<cosmrs::rpc::endpoint::broadcast::tx_commit::TxResult> for IndyError {
+    fn from(result: cosmrs::rpc::endpoint::broadcast::tx_commit::TxResult) -> IndyError {
+        IndyError::from_msg(
+            IndyErrorKind::InvalidStructure,
+            format!(
+                    "check_tx: error code: {}, log: {}",
+                    result.code.value(),
+                    serde_json::to_string_pretty(&result).unwrap()
+                ),
+        )
     }
 }
 
@@ -449,6 +506,7 @@ impl From<IndyErrorKind> for ErrorCode {
             }
             IndyErrorKind::PaymentExtraFunds => ErrorCode::PaymentExtraFundsError,
             IndyErrorKind::TransactionNotAllowed => ErrorCode::TransactionNotAllowedError,
+            IndyErrorKind::QueryAccountDoesNotexist => ErrorCode::QueryAccountDoesNotexistError,
         }
     }
 }
@@ -625,4 +683,28 @@ pub fn get_current_error_c_json() -> *const c_char {
 
 pub fn string_to_cstring(s: String) -> CString {
     CString::new(s).unwrap()
+}
+
+
+#[cfg(feature = "cheqd")]
+#[cfg(test)]
+mod tests {
+    use crate::IndyError;
+    use failure::Fail;
+    use std::error::Error;
+
+    #[test]
+    fn indy_error_from_eyre_report() {
+        // This string will imulate that there is another error after cosmrs's error
+        // Expected order is:
+        //   - Invalid state
+        //   - <between_str>
+        //   - Cosmos_sdk (Invalid accout ID)
+        let between_str = "Another error";
+        let account = cosmrs::AccountId::new("123user", [0u8; 20]).map_err(|err| {
+            let indy_error = IndyError::from(err.wrap_err(between_str));
+            assert_eq!(Fail::iter_chain(indy_error.inner.as_ref()).count(), 4);
+            assert_eq!(Fail::iter_chain(indy_error.inner.as_ref()).position(|x| x.to_string().contains(between_str)), Some(1))
+        });
+    }
 }

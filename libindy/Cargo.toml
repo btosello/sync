@@ -1,11 +1,11 @@
 [package]
-name = "libvdrtools"
-version = "0.0.1"
-authors = ["Evernym"]
+name = "libindy"
+version = "1.95.0"
+authors = ["Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
 edition = "2018"
 
-description = "A library that facilitates building standards compliant and interoperable solutions for self-sovereign identity by abstracting the operations for interacting with a verifiable data registry as defined by Hyperledger Aries."
-license = "Apache-2.0"
+description = "This is the official SDK for Hyperledger Indy (https://www.hyperledger.org/projects), which provides a distributed-ledger-based foundation for self-sovereign identity (https://sovrin.org). The major artifact of the SDK is a c-callable library."
+license = "MIT/Apache-2.0"
 build = "build.rs"
 
 [lib]
@@ -18,11 +18,13 @@ default = ["base58_rust_base58", "pair_amcl", "local_nodes_pool", "revocation_te
 base58_rust_base58 = ["rust-base58"]
 pair_amcl = ["ursa"]
 local_nodes_pool = []
+local_nodes_cheqd_pool = []
 revocation_tests = []
 force_full_interaction_tests = []
 sodium_static = []
 only_high_cases = []
 mysql_storage = []
+cheqd = ["indy-api-types/cheqd", "indy-sys/cheqd", "indy/cheqd", "indy-utils/cheqd"]
 
 # Causes the build to fail on all warnings
 fatal_warnings = []
@@ -30,9 +32,10 @@ fatal_warnings = []
 [dependencies]
 async-std = "1.8.0"
 async-trait = "0.1.42"
+cfg-if = "1.0.0"
 env_logger = "0.7"
 etcommon-rlp = "0.2.4"
-failure = "0.1.7"
+failure = { version = "0.1.8", features = ["backtrace"] }
 hex = "0.4.0"
 libc = "0.2.95"
 log = "0.4.8"
@@ -40,7 +43,7 @@ log-derive = "0.3.0"
 num_cpus = "1.8.0"
 derivative = "1.0.2"
 backtrace = "=0.3.11"
-rand = "0.7.0"
+rand = "0.8.4"
 rust-base58 = {version = "0.0.4", optional = true}
 serde = "1.0.99"
 serde_json = "1.0.40"
@@ -66,16 +69,16 @@ num-derive = "0.2"
 convert_case = "0.3.2"
 futures = "0.3.1"
 lru = "0.6.5"
+http-client = "6.4.1"
+ics23 = "0.6.5"
 lexical-core = "0.7.6"
 
-[dependencies.uuid]
-version = "0.7.4"
-default-features = false
-features = ["v4"]
-
-[dependencies.ursa]
-version =  "0.3.2"
-optional = true
+cosmrs = { version = "0.1.0", features = ["rpc"] }
+k256 = { version = "0.9.6", features = ["ecdsa-core", "ecdsa"] }
+uuid = { version = "0.7.4", default-features = false, features = ["v4"] }
+ursa = { version = "0.3.7", optional = true}
+prost = "0.7.0"
+prost-types = "0.7.0"
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"
@@ -107,36 +110,45 @@ priority = "optional"
 maintainer-scripts = "./debian"
 changelog = "./debian/changelog"
 
-[package.metadata.deb.variants.libvdrtools-xenial]
-provides = "libvdrtools (= 0.0.1)"
-name = "libvdrtools"
+[package.metadata.deb.variants.libindy-xenial]
+provides = "libindy (= 1.95.0)"
+name = "libindy"
 depends = "libzmq5, libsodium18, libssl1.0.0"
 assets = [
     ["target/release/libindy.so", "usr/lib/", "644"],
 ]
 
-[package.metadata.deb.variants.libvdrtools-bionic]
-provides = "libvdrtools (= 0.0.1)"
-name = "libvdrtools"
+[package.metadata.deb.variants.libindy-bionic]
+provides = "libindy (= 1.95.0)"
+name = "libindy"
 depends = "libzmq5, libsodium23, libssl1.1"
 assets = [
     ["target/release/libindy.so", "usr/lib/", "644"],
 ]
 
-[package.metadata.deb.variants.libvdrtools-dev-xenial]
-provides = "libvdrtools-dev (= 0.0.1)"
-name = "libvdrtools-dev"
-depends = "libvdrtools (= 0.0.1)"
+[package.metadata.deb.variants.libindy-dev-xenial]
+provides = "libindy-dev (= 1.95.0)"
+name = "libindy-dev"
+depends = "libindy (= 1.95.0)"
 assets = [
     ["include/*.h", "usr/include/indy/", "644"],
     ["target/release/libindy.a", "usr/lib/", "644"],
 ]
 
-[package.metadata.deb.variants.libvdrtools-dev-bionic]
-provides = "libvdrtools-dev (= 0.0.1)"
-name = "libvdrtools-dev"
-depends = "libvdrtools (= 0.0.1)"
+[package.metadata.deb.variants.libindy-dev-bionic]
+provides = "libindy-dev (= 1.95.0)"
+name = "libindy-dev"
+depends = "libindy (= 1.95.0)"
 assets = [
     ["include/*.h", "usr/include/indy/", "644"],
     ["target/release/libindy.a", "usr/lib/", "644"],
 ]
+
+[build-dependencies]
+regex = "1.2.1"
+prost = "0.7"
+prost-build = "0.7"
+tonic = "0.4"
+tonic-build = "0.4"
+tempdir = "0.3"
+walkdir = "2"

@@ -16,6 +16,12 @@ pub mod wallet;
 pub mod logger;
 pub mod cache;
 pub mod metrics;
+#[cfg(feature = "cheqd")]
+pub mod cheqd_ledger;
+#[cfg(feature = "cheqd")]
+pub mod cheqd_keys;
+#[cfg(feature = "cheqd")]
+pub mod cheqd_pool;
 
 use libc::{c_void, c_char};
 

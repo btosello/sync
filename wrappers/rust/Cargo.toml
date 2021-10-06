@@ -42,3 +42,4 @@ dirs = "1.0.4"
 timeout_tests = []
 tests_to_fix = []
 extended_api_types = []
+cheqd = ["indy-sys/cheqd"]

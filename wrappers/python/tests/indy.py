@@ -2,6 +2,7 @@ import pytest
 
 from indy import libindy
 
+
 # noinspection PyUnusedLocal
 @pytest.mark.sync
 def test_set_runtime_config():

@@ -354,8 +354,8 @@ pub struct SimpleRequest {
     pub req_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "op")]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Message {
     #[serde(rename = "CONSISTENCY_PROOF")]
     ConsistencyProof(ConsistencyProof),
