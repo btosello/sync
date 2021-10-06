@@ -1,0 +1,26 @@
+name: Sync Fork
+
+on:
+  schedule:
+    - cron: '*/10 * * * *' # every midnight
+  workflow_dispatch: # on button click
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+      - name: Sync repo with upstream
+        run: |
+          git --version
+          git remote -v
+          git remote add upstream https://gitlab.com/evernym/verity/vdr-tools.git
+          git remote -v
+          git fetch upstream
+          git checkout cheqd
+          git merge upstream/cheqd --allow-unrelated-histories
+          git push --allow-unrelated-histories
+
