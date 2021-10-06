@@ -107,21 +107,12 @@ pub mod connect_command {
             JSONValue::from(json).to_string()
         };
 
-        #[cfg(feature = "cheqd")]
-        match ctx.get_active_pool() {
-            ActivePool::None | ActivePool::Indy(_) => Ok(()),   // We can safely set new pool name
-            _ => {
-                println_err!("Pool of other type is open. Please close it first.");
-                Err(())
-            }
-        }?;
-
         let res = Ok(())
             .and_then(|_| {
-                if let Some((handle, name)) = get_indy_connected_pool(ctx) {
+                if let Some((handle, name)) = get_connected_pool(ctx) {
                     match Pool::close(handle) {
                         Ok(()) => {
-                            set_none_active_pool(ctx);
+                            set_connected_pool(ctx, None);
                             set_transaction_author_info(ctx, None);
                             println_succ!("Pool \"{}\" has been disconnected", name);
                             Ok(())
@@ -139,7 +130,7 @@ pub mod connect_command {
             .and_then(|_| {
                 match Pool::open_pool_ledger(name, Some(&config)) {
                     Ok(handle) => {
-                        set_indy_active_pool(ctx, name.to_owned(), handle);
+                        set_connected_pool(ctx, Some((handle, name.to_owned())));
                         println_succ!("Pool \"{}\" has been connected", name);
                         Ok(handle)
                     }
@@ -179,10 +170,10 @@ pub mod connect_command {
     pub fn cleanup(ctx: &CommandContext) {
         trace!("cleanup >> ctx {:?}", ctx);
 
-        if let Some((handle, name)) = get_indy_connected_pool(ctx) {
+        if let Some((handle, name)) = get_connected_pool(ctx) {
             match Pool::close(handle) {
                 Ok(()) => {
-                    set_indy_active_pool(ctx, name.to_owned(), handle);
+                    set_connected_pool(ctx, Some((handle, name.to_owned())));
                     println_succ!("Pool \"{}\" has been disconnected", name)
                 }
                 Err(err) => handle_indy_error(err, None, None, None),
@@ -211,7 +202,7 @@ pub mod list_command {
 
                 print_list_table(&pools, &[("pool", "Pool")], "There are no pools defined");
 
-                if let Some((_, cur_pool)) = get_indy_connected_pool(ctx) {
+                if let Some((_, cur_pool)) = get_connected_pool(ctx) {
                     println_succ!("Current pool \"{}\"", cur_pool);
                 }
 
@@ -238,7 +229,7 @@ pub mod show_taa_command {
     fn execute(ctx: &CommandContext, params: &CommandParams) -> Result<(), ()> {
         trace!("execute >> ctx {:?} params {:?}", ctx, params);
 
-        let pool_handle = ensure_indy_connected_pool_handle(&ctx)?;
+        let pool_handle = ensure_connected_pool_handle(&ctx)?;
 
         let res = match set_transaction_author_agreement(ctx, pool_handle, false) {
             Err(_) => Err(()),
@@ -264,7 +255,7 @@ pub mod refresh_command {
     fn execute(ctx: &CommandContext, params: &CommandParams) -> Result<(), ()> {
         trace!("execute >> ctx {:?} params {:?}", ctx, params);
 
-        let (pool_handle, pool_name) = ensure_indy_connected_pool(&ctx)?;
+        let (pool_handle, pool_name) = ensure_connected_pool(&ctx)?;
 
         let res = match Pool::refresh(pool_handle) {
             Ok(_) => {
@@ -341,7 +332,7 @@ pub mod disconnect_command {
     fn execute(ctx: &CommandContext, params: &CommandParams) -> Result<(), ()> {
         trace!("execute >> ctx {:?} params {:?}", ctx, params);
 
-        let (handle, name) = ensure_indy_connected_pool(ctx)?;
+        let (handle, name) = ensure_connected_pool(ctx)?;
 
         let res = close_pool(ctx, handle, &name)
             .map(|_| println_err!("Pool \"{}\" has been disconnected", name));
@@ -354,7 +345,7 @@ pub mod disconnect_command {
 fn close_pool(ctx: &CommandContext, handle: i32, name: &str) -> Result<(), ()> {
     match Pool::close(handle) {
         Ok(()) => {
-            set_none_active_pool(ctx);
+            set_connected_pool(ctx, None);
             set_transaction_author_info(ctx, None);
             Ok(())
         }
@@ -560,7 +551,7 @@ pub mod tests {
                 params.insert("name", POOL.to_string());
                 cmd.execute(&ctx, &params).unwrap();
             }
-            ensure_indy_connected_pool_handle(&ctx).unwrap();
+            ensure_connected_pool_handle(&ctx).unwrap();
             disconnect_and_delete_pool(&ctx);
             tear_down();
         }
@@ -630,7 +621,7 @@ pub mod tests {
                 params.insert("timeout", "100".to_string());
                 cmd.execute(&ctx, &params).unwrap();
             }
-            ensure_indy_connected_pool_handle(&ctx).unwrap();
+            ensure_connected_pool_handle(&ctx).unwrap();
             disconnect_and_delete_pool(&ctx);
             tear_down();
         }
@@ -646,7 +637,7 @@ pub mod tests {
                 params.insert("extended-timeout", "100".to_string());
                 cmd.execute(&ctx, &params).unwrap();
             }
-            ensure_indy_connected_pool_handle(&ctx).unwrap();
+            ensure_connected_pool_handle(&ctx).unwrap();
             disconnect_and_delete_pool(&ctx);
             tear_down();
         }
@@ -662,7 +653,7 @@ pub mod tests {
                 params.insert("pre-ordered-nodes", "Node2,Node1".to_string());
                 cmd.execute(&ctx, &params).unwrap();
             }
-            ensure_indy_connected_pool_handle(&ctx).unwrap();
+            ensure_connected_pool_handle(&ctx).unwrap();
             disconnect_and_delete_pool(&ctx);
             tear_down();
         }
@@ -738,7 +729,7 @@ pub mod tests {
                 let params = CommandParams::new();
                 cmd.execute(&ctx, &params).unwrap();
             }
-            ensure_indy_connected_pool_handle(&ctx).unwrap_err();
+            ensure_connected_pool_handle(&ctx).unwrap_err();
             delete_pool(&ctx);
             tear_down();
         }

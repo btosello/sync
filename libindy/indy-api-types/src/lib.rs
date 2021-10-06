@@ -265,9 +265,6 @@ pub enum ErrorCode
     // The transaction is not allowed to a requester
     TransactionNotAllowedError = 706,
 
-    // Query Account does not exist in the pool
-    QueryAccountDoesNotexistError = 808,
-
 }
 
 pub mod wallet {

@@ -33,16 +33,11 @@ pub fn cleanup_pool(name: &str) {
     cleanup_files(&environment::pool_home_path(), name);
 }
 
-pub fn cleanup_cheqd_pool(name: &str) {
-    cleanup_files(&environment::cheqd_pool_home_path(), name);
-}
-
 pub fn cleanup_storage(name: &str) {
     cleanup_wallet(name);
     cleanup_pool(name);
     cleanup_indy_home(name);
     cleanup_temp(name);
-    cleanup_cheqd_pool(name);
 }
 
 pub fn test_pool_create_poolfile(pool_name: &str) -> File {
