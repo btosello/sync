@@ -144,15 +144,14 @@ impl Fail for IndyError {
 
 impl fmt::Display for IndyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut first = true;
+        let mut causes = <dyn Fail>::iter_chain(self.inner.as_ref());
 
-        for cause in Fail::iter_chain(self.inner.as_ref()) {
-            if first {
-                first = false;
-                writeln!(f, "Error: {}", cause)?;
-            } else {
-                writeln!(f, "  Caused by: {}", cause)?;
-            }
+        if let Some(cause) = causes.next() {
+            writeln!(f, "Error: {}", cause)?;
+        }
+
+        for cause in causes {
+            writeln!(f, "  Caused by: {}", cause)?;
         }
 
         Ok(())
@@ -296,7 +295,7 @@ impl From<UrsaCryptoError> for IndyError {
     fn from(err: UrsaCryptoError) -> Self {
         let message = format!(
             "UrsaCryptoError: {}",
-            Fail::iter_causes(&err)
+            <dyn Fail>::iter_causes(&err)
                 .map(|e| e.to_string())
                 .collect::<String>()
         );
@@ -385,6 +384,7 @@ impl From<sqlx::Error> for IndyError {
 // ToDo: For now we don't have any specified ABCI errors from tendermint endpoint and from cosmos too
 // That's why we use this general approach.
 // But in the future, in case of adding special ABCI codes it has to be mapped into ErrorCodes.
+#[cfg(feature = "cheqd")]
 impl From<cosmrs::rpc::endpoint::broadcast::tx_commit::TxResult> for IndyError {
     fn from(result: cosmrs::rpc::endpoint::broadcast::tx_commit::TxResult) -> IndyError {
         IndyError::from_msg(

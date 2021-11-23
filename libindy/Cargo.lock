@@ -1399,16 +1399,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ffi-support"
-version = "0.4.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27838c6815cfe9de2d3aeb145ffd19e565f577414b33f3bdbf42fe040e9e0ff6"
-dependencies = [
- "lazy_static",
- "log",
-]
-
-[[package]]
 name = "fixedbitset"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2206,8 +2196,35 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "789da6d93f1b866ffe175afc5322a4d76c038605a1c3319bb57b06967ca98a36"
 
 [[package]]
-name = "libindy"
-version = "1.95.0"
+name = "libm"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c7d73b3f436185384286bd8098d17ec07c9a7d2388a6599f824d8502b529702a"
+
+[[package]]
+name = "libsodium-sys"
+version = "0.0.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fcbd1beeed8d44caa8a669ebaa697c313976e242c03cc9fb23d88bf1656f5542"
+dependencies = [
+ "libc",
+ "pkg-config",
+]
+
+[[package]]
+name = "libsqlite3-sys"
+version = "0.20.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64d31059f22935e6c31830db5249ba2b7ecd54fd73a9909286f0a67aa55c2fbd"
+dependencies = [
+ "cc",
+ "pkg-config",
+ "vcpkg",
+]
+
+[[package]]
+name = "libvdrtools"
+version = "0.0.1"
 dependencies = [
  "android_logger",
  "async-std",
@@ -2269,33 +2286,6 @@ dependencies = [
  "walkdir",
  "zeroize",
  "zmq",
-]
-
-[[package]]
-name = "libm"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7d73b3f436185384286bd8098d17ec07c9a7d2388a6599f824d8502b529702a"
-
-[[package]]
-name = "libsodium-sys"
-version = "0.0.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcbd1beeed8d44caa8a669ebaa697c313976e242c03cc9fb23d88bf1656f5542"
-dependencies = [
- "libc",
- "pkg-config",
-]
-
-[[package]]
-name = "libsqlite3-sys"
-version = "0.20.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64d31059f22935e6c31830db5249ba2b7ecd54fd73a9909286f0a67aa55c2fbd"
-dependencies = [
- "cc",
- "pkg-config",
- "vcpkg",
 ]
 
 [[package]]
@@ -4509,8 +4499,9 @@ dependencies = [
 
 [[package]]
 name = "ursa"
-version = "0.3.6"
-source = "git+https://github.com/hyperledger/ursa.git?branch=main#bec7727ab78e670e50a160a487aa3c739f99b4a2"
+version = "0.3.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8760a62e18e4d3e3f599e15c09a9f9567fd9d4a90594d45166162be8d232e63b"
 dependencies = [
  "aead",
  "aes 0.6.0",
@@ -4524,9 +4515,7 @@ dependencies = [
  "chacha20poly1305",
  "curve25519-dalek",
  "ed25519-dalek",
- "env_logger",
  "failure",
- "ffi-support",
  "hex",
  "hkdf 0.11.0",
  "hmac 0.11.0",
@@ -4539,7 +4528,6 @@ dependencies = [
  "rand_chacha 0.2.1",
  "secp256k1",
  "serde",
- "serde_json",
  "sha2",
  "sha3 0.9.1",
  "subtle",
